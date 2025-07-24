@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Документ-анализатор</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 20px; }
+    .log { border: 1px solid #ccc; padding: 10px; height: 200px; overflow-y: auto; background: #f9f9f9; }
+    .status-line { margin: 3px 0; }
+    .status-step { font-weight: bold; color: #333; }
+    .elapsed { color: #555; font-size: 0.9em; margin-left: 5px; }
+    .result { margin-top: 20px; }
+  </style>
+</head>
+<body>
+  <h1>Документ-анализатор</h1>
+
+  <div>
+    <label for="model">Выберите модель:</label>
+    <select id="model"></select>
+  </div>
+
+  <div style="margin-top:10px;">
+    <input type="file" id="fileInput">
+    <button id="uploadBtn">Загрузить</button>
+  </div>
+
+  <h3>Статус:</h3>
+  <div class="log" id="log"></div>
+
+  <div class="result" id="result"></div>
+
+  <script>
+    const logDiv = document.getElementById('log');
+    const modelSelect = document.getElementById('model');
+    const resultDiv = document.getElementById('result');
+    const uploadBtn = document.getElementById('uploadBtn');
+    const fileInput = document.getElementById('fileInput');
+
+    // Функция добавления строки в лог
+    function addLog(step, message, elapsed) {
+      const line = document.createElement('div');
+      line.classList.add('status-line');
+      line.innerHTML = `<span class="status-step">[${step}]</span> ${message}` +
+                       (elapsed ? ` <span class="elapsed">(${elapsed}s)</span>` : '');
+      logDiv.appendChild(line);
+      logDiv.scrollTop = logDiv.scrollHeight;
+    }
+
+    // Подключаем WebSocket для статусов
+    const ws = new WebSocket(`ws://${window.location.host}/ocr-progress`);
+    ws.onmessage = (event) => {
+      const data = JSON.parse(event.data);
+      addLog(data.step, data.message, data.elapsed);
+    };
+
+    // Загружаем список моделей
+    async function loadModels() {
+      try {
+        const res = await fetch('/models');
+        const data = await res.json();
+        modelSelect.innerHTML = '';
+        data.models.forEach(m => {
+          const opt = document.createElement('option');
+          opt.value = m;
+          opt.textContent = m;
+          modelSelect.appendChild(opt);
+        });
+      } catch (err) {
+        addLog('error', 'Не удалось загрузить список моделей');
+      }
+    }
+
+    loadModels();
+
+    // Обработка кнопки загрузки
+    uploadBtn.addEventListener('click', async () => {
+      if (!fileInput.files.length) {
+        alert('Выберите файл!');
+        return;
+      }
+
+      logDiv.innerHTML = '';
+      resultDiv.innerHTML = '';
+
+      const file = fileInput.files[0];
+      const model = modelSelect.value;
+
+      const formData = new FormData();
+      formData.append('document', file);
+
+      addLog('upload', `Отправка файла: ${file.name}`);
+
+      try {
+        const response = await fetch(`/upload?model=${encodeURIComponent(model)}`, {
+          method: 'POST',
+          body: formData
+        });
+        const data = await response.json();
+        if (data.error) {
+          addLog('error', data.error);
+        } else {
+          resultDiv.innerHTML = `
+            <h3>Результат:</h3>
+            <p><strong>Тип:</strong> ${data.type}</p>
+            <p><strong>Описание:</strong> ${data.description || 'Новый тип'}</p>
+            <p><strong>Саммари:</strong> ${data.summary}</p>
+          `;
+        }
+      } catch (err) {
+        addLog('error', 'Ошибка загрузки файла');
+      }
+    });
+  </script>
+</body>
+</html>

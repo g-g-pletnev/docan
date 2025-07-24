@@ -1,0 +1,22 @@
+{
+  "name": "test-scan",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "start":"node ./app.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "dependencies": {
+    "body-parser": "^2.2.0",
+    "express": "^5.1.0",
+    "fs": "^0.0.1-security",
+    "node-fetch": "^2.7.0",
+    "office-text-extractor": "^3.0.3",
+    "tesseract.js": "^6.0.1",
+    "ws": "^8.18.3"
+  }
+}

@@ -1,0 +1,22 @@
+[
+  {
+    "name": "report",
+    "description": "Стандартный отчёт"
+  },
+ {
+    "name": "task descripion",
+    "description": "Техническое задание"
+  },
+  {
+    "name": "invoice",
+    "description": "Счёт на оплату"
+  },
+  {
+    "name": "Python-script",
+    "description": "Python-script"
+  },
+  {
+    "name": "investment presentation",
+    "description": "investment presentation"
+  }
+]
